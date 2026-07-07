@@ -1,5 +1,7 @@
 import re
 import matplotlib.pyplot as plt
+from wordcloud import WordCloud
+from collections import Counter
 import string
 
 import nltk
@@ -52,6 +54,13 @@ def clean_text(text):
 
     return " ".join(words)
 
+custom_stopwords = {
+    "dress", "top", "shirt", "wear", "wearing",
+    "size", "fabric", "product", "item",
+    "one", "would", "im", "look", "color",
+    "like", "really", "ordered", "order",
+    "back", "also", "well", "even", "fit"
+}
 
 # Clean reviews
 df["Clean Review"] = df["Review Text"].apply(clean_text)
@@ -92,45 +101,201 @@ df.to_csv("sentiment_results.csv", index=False)
 
 print("\nProcessed dataset saved successfully.")
 
-# -----------------------------
-# Sentiment Distribution Chart
-# -----------------------------
-
-sentiment_counts = df["Sentiment"].value_counts()
-
-plt.figure(figsize=(6,4))
-
-plt.bar(sentiment_counts.index, sentiment_counts.values)
-
-plt.title("Sentiment Distribution")
-
-plt.xlabel("Sentiment")
-
-plt.ylabel("Number of Reviews")
-
-plt.tight_layout()
-
-plt.savefig("outputs/sentiment_distribution.png")
-
-plt.show()
-
 
 # -----------------------------
-# Rating vs Sentiment
+# Average Compound Score by Rating
 # -----------------------------
 
-rating_sentiment = pd.crosstab(df["Rating"], df["Sentiment"])
+average_scores = (
+    df.groupby("Rating")["Compound Score"]
+    .mean()
+    .reset_index()
+)
 
-rating_sentiment.plot(kind="bar", figsize=(8,5))
+plt.figure(figsize=(8,5))
 
-plt.title("Rating vs Sentiment")
+plt.plot(
+    average_scores["Rating"],
+    average_scores["Compound Score"],
+    marker="o",
+    linewidth=3
+    
+)
+
+for x, y in zip(
+        average_scores["Rating"],
+        average_scores["Compound Score"]):
+    plt.text(
+        x,
+        y + 0.02,
+        f"{y:.2f}",
+        ha="center",
+        fontsize=10
+    )
+
+plt.grid(alpha=0.3)
+
+plt.title(
+    "Average Compound Score by Rating",
+    fontsize=16,
+    fontweight="bold"
+)
 
 plt.xlabel("Rating")
 
-plt.ylabel("Number of Reviews")
+plt.ylabel("Average Compound Score")
+
+plt.savefig(
+    "outputs/average_compound_score.png",
+    dpi=300,
+    bbox_inches="tight"
+)
+
+plt.show()
+
+# -----------------------------
+# Top Positive Words
+# -----------------------------
+
+positive_reviews = " ".join(
+    df[df["Sentiment"]=="Positive"]["Clean Review"]
+)
+
+positive_counter = Counter(
+    positive_reviews.split()
+)
+
+positive_words = positive_counter.most_common(15)
+
+words = [w for w, c in positive_words]
+counts = [c for w, c in positive_words]
+
+plt.figure(figsize=(10,6))
+
+# Positive
+plt.barh(words, counts, color="forestgreen")
+
+plt.title(
+    "Top 15 Positive Words",
+    fontsize=16,
+    fontweight="bold"
+)
+
+plt.xlabel("Frequency")
+
+plt.grid(axis="x", alpha=0.3)
 
 plt.tight_layout()
 
-plt.savefig("outputs/rating_vs_sentiment.png")
+plt.savefig(
+    "outputs/top_positive_words.png",
+    dpi=300,
+    bbox_inches="tight"
+)
 
 plt.show()
+
+# -----------------------------
+# Top Negative Words
+# -----------------------------
+
+negative_reviews = " ".join(
+    df[df["Sentiment"]=="Negative"]["Clean Review"]
+)
+
+negative_counter = Counter(
+    negative_reviews.split()
+)
+
+negative_words = negative_counter.most_common(15)
+
+words = [w for w, c in negative_words]
+counts = [c for w, c in negative_words]
+
+plt.figure(figsize=(10,6))
+
+# Negative
+plt.barh(words, counts, color="firebrick")
+
+plt.title(
+    "Top 15 Negative Words",
+    fontsize=16,
+    fontweight="bold"
+)
+
+plt.xlabel("Frequency")
+
+plt.grid(axis="x", alpha=0.3)
+
+plt.tight_layout()
+
+plt.savefig(
+    "outputs/top_negative_words.png",
+    dpi=300,
+    bbox_inches="tight"
+)
+
+plt.show()
+
+# -----------------------------
+# Average Emotion Scores
+# -----------------------------
+
+df["Positive Score"] = df["Review Text"].apply(
+    lambda x: analyzer.polarity_scores(x)["pos"]
+)
+
+df["Neutral Score"] = df["Review Text"].apply(
+    lambda x: analyzer.polarity_scores(x)["neu"]
+)
+
+df["Negative Score"] = df["Review Text"].apply(
+    lambda x: analyzer.polarity_scores(x)["neg"]
+)
+
+scores = [
+    df["Positive Score"].mean(),
+    df["Neutral Score"].mean(),
+    df["Negative Score"].mean()
+]
+
+labels = [
+    "Positive",
+    "Neutral",
+    "Negative"
+]
+
+plt.figure(figsize=(7,5))
+
+bars = plt.bar(labels, scores)
+
+for bar in bars:
+    height = bar.get_height()
+
+    plt.text(
+        bar.get_x()+bar.get_width()/2,
+        height,
+        f"{height:.2f}",
+        ha="center"
+    )
+
+plt.title(
+    "Average VADER Emotion Scores",
+    fontsize=16,
+    fontweight="bold"
+)
+
+plt.ylabel("Average Score")
+
+plt.grid(axis="y", alpha=0.3)
+
+plt.tight_layout()
+
+plt.savefig(
+    "outputs/vader_scores.png",
+    dpi=300,
+    bbox_inches="tight"
+)
+
+plt.show()
+
