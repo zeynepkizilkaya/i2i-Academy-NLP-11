@@ -1,4 +1,5 @@
 import re
+import matplotlib.pyplot as plt
 import string
 
 import nltk
@@ -73,7 +74,7 @@ def get_sentiment(text):
 
 
 # Analyze sentiment
-df[["Compound Score", "Sentiment"]] = df["Clean Review"].apply(get_sentiment)
+df[["Compound Score", "Sentiment"]] = df["Review Text"].apply(get_sentiment)
 
 print("\nSentiment Distribution:\n")
 print(df["Sentiment"].value_counts())
@@ -86,3 +87,50 @@ print(df.nlargest(5, "Compound Score")[["Review Text", "Compound Score"]])
 
 print("\nTop 5 Negative Reviews:\n")
 print(df.nsmallest(5, "Compound Score")[["Review Text", "Compound Score"]])
+# Save processed dataset
+df.to_csv("sentiment_results.csv", index=False)
+
+print("\nProcessed dataset saved successfully.")
+
+# -----------------------------
+# Sentiment Distribution Chart
+# -----------------------------
+
+sentiment_counts = df["Sentiment"].value_counts()
+
+plt.figure(figsize=(6,4))
+
+plt.bar(sentiment_counts.index, sentiment_counts.values)
+
+plt.title("Sentiment Distribution")
+
+plt.xlabel("Sentiment")
+
+plt.ylabel("Number of Reviews")
+
+plt.tight_layout()
+
+plt.savefig("outputs/sentiment_distribution.png")
+
+plt.show()
+
+
+# -----------------------------
+# Rating vs Sentiment
+# -----------------------------
+
+rating_sentiment = pd.crosstab(df["Rating"], df["Sentiment"])
+
+rating_sentiment.plot(kind="bar", figsize=(8,5))
+
+plt.title("Rating vs Sentiment")
+
+plt.xlabel("Rating")
+
+plt.ylabel("Number of Reviews")
+
+plt.tight_layout()
+
+plt.savefig("outputs/rating_vs_sentiment.png")
+
+plt.show()
