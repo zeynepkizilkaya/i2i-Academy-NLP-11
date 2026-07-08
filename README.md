@@ -12,7 +12,7 @@ The project also includes several visualizations to better understand customer o
 
 ## Dataset
 
-- Source: Kaggle
+- Source: [Kaggle - Women's E-Commerce Clothing Reviews](https://www.kaggle.com/datasets/nicapotato/womens-ecommerce-clothing-reviews?resource=download)
 - Dataset: Women's E-Commerce Clothing Reviews
 - Language: English
 - Format: CSV
