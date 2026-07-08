@@ -61,6 +61,7 @@ custom_stopwords = {
     "like", "really", "ordered", "order",
     "back", "also", "well", "even", "fit"
 }
+stop_words.update(custom_stopwords)
 
 # Clean reviews
 df["Clean Review"] = df["Review Text"].apply(clean_text)
